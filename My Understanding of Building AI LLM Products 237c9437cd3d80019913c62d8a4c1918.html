@@ -1,0 +1,675 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>My Understanding of Building AI/LLM Products</title><style>
+    :root {
+        --primary-color: #4a6fa5;
+        --secondary-color: #f8f9fa;
+        --accent-color: #e9ecef;
+        --text-color: #212529;
+        --light-text: #6c757d;
+    }
+    /* cspell:disable-file */
+    /* webkit printing magic: print all background colors */
+    html {
+        -webkit-print-color-adjust: exact;
+    }
+    * {
+        box-sizing: border-box;
+        -webkit-print-color-adjust: exact;
+    }
+
+    html,
+    body {
+        margin: 0;
+        padding: 0;
+    }
+    @media only screen {
+        body {
+            margin: 2em auto;
+            max-width: 900px;
+            color: rgb(55, 53, 47);
+        }
+    }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: var(--text-color);
+        background-color: #fff;
+        background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%234a6fa5' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        margin: 2em auto;
+        max-width: 900px;
+    }
+    a, a.visited {
+        color: var(--primary-color);
+        text-decoration: underline;
+        transition: color 0.2s;
+    }
+    a:hover {
+        color: #2c4a75;
+    }
+    .pdf-relative-link-path {
+        font-size: 80%;
+        color: #444;
+    }
+    h1, h2, h3 {
+        letter-spacing: -0.01em;
+        line-height: 1.2;
+        font-weight: 600;
+        margin-bottom: 0.5em;
+    }
+    .page-title, h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-top: 0;
+        margin-bottom: 0.75em;
+        color: var(--primary-color);
+    }
+    h2 {
+        font-size: 1.5rem;
+        margin-top: 1.5rem;
+        color: var(--primary-color);
+        border-bottom: 2px solid var(--accent-color);
+        display: inline-block;
+        padding-bottom: 0.2em;
+    }
+    h3 {
+        font-size: 1.25rem;
+        margin-top: 1.25rem;
+        color: var(--primary-color);
+    }
+    .source, .callout {
+        background: var(--secondary-color);
+        border: 1px solid var(--accent-color);
+        border-radius: 8px;
+        padding: 1.5em;
+        word-break: break-all;
+        margin-bottom: 1.5em;
+    }
+    .indented {
+        padding-left: 1.5em;
+    }
+    figure {
+        margin: 1.25em 0;
+        page-break-inside: avoid;
+    }
+    figcaption {
+        opacity: 0.5;
+        font-size: 85%;
+        margin-top: 0.5em;
+    }
+    mark {
+        background-color: transparent;
+    }
+    hr {
+        border: none;
+        border-bottom: 1px solid var(--accent-color);
+        margin: 2em 0;
+    }
+    img {
+        max-width: 100%;
+    }
+
+    @media only print {
+        img {
+            max-height: 100vh;
+            object-fit: contain;
+        }
+    }
+
+    @page {
+        margin: 1in;
+    }
+
+    .collection-content {
+        font-size: 0.875rem;
+    }
+
+    .column-list {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .column {
+        padding: 0 1em;
+    }
+
+    .column:first-child {
+        padding-left: 0;
+    }
+
+    .column:last-child {
+        padding-right: 0;
+    }
+
+    .table_of_contents-item {
+        display: block;
+        font-size: 0.875rem;
+        line-height: 1.3;
+        padding: 0.125rem;
+        color: var(--primary-color);
+    }
+
+    .table_of_contents-indent-1 {
+        margin-left: 1.5rem;
+    }
+
+    .table_of_contents-indent-2 {
+        margin-left: 3rem;
+    }
+
+    .table_of_contents-indent-3 {
+        margin-left: 4.5rem;
+    }
+
+    .table_of_contents-link {
+        text-decoration: none;
+        opacity: 0.7;
+        border-bottom: 1px solid rgba(55, 53, 47, 0.18);
+    }
+
+    table, th, td {
+        border: 1px solid var(--accent-color);
+        border-collapse: collapse;
+    }
+
+    table {
+        border-left: none;
+        border-right: none;
+    }
+
+    th, td {
+        font-weight: normal;
+        padding: 0.25em 0.5em;
+        line-height: 1.5;
+        min-height: 1.5em;
+        text-align: left;
+    }
+
+    th {
+        color: var(--light-text);
+        background: var(--accent-color);
+    }
+
+    tr:nth-child(even) td {
+        background: var(--secondary-color);
+    }
+
+    ol, ul {
+        margin: 0;
+        margin-block-start: 0.6em;
+        margin-block-end: 0.6em;
+    }
+
+    li > ol:first-child,
+    li > ul:first-child {
+        margin-block-start: 0.6em;
+    }
+
+    ul > li {
+        list-style: disc;
+    }
+
+    ul.to-do-list {
+        padding-inline-start: 0;
+    }
+
+    ul.to-do-list > li {
+        list-style: none;
+    }
+
+    .to-do-children-checked {
+        text-decoration: line-through;
+        opacity: 0.375;
+    }
+
+    ul.toggle > li {
+        list-style: none;
+    }
+
+    ul {
+        padding-inline-start: 1.7em;
+    }
+
+    ul > li {
+        padding-left: 0.1em;
+    }
+
+    ol {
+        padding-inline-start: 1.6em;
+    }
+
+    ol > li {
+        padding-left: 0.2em;
+    }
+
+    .mono ol {
+        padding-inline-start: 2em;
+    }
+
+    .mono ol > li {
+        text-indent: -0.4em;
+    }
+
+    .toggle {
+        padding-inline-start: 0em;
+        list-style-type: none;
+    }
+
+    /* Indent toggle children */
+    .toggle > li > details {
+        padding-left: 1.7em;
+    }
+
+    .toggle > li > details > summary {
+        margin-left: -1.1em;
+    }
+
+    .selected-value {
+        display: inline-block;
+        padding: 0 0.5em;
+        background: rgba(206, 205, 202, 0.5);
+        border-radius: 3px;
+        margin-right: 0.5em;
+        margin-top: 0.3em;
+        margin-bottom: 0.3em;
+        white-space: nowrap;
+    }
+
+    .collection-title {
+        display: inline-block;
+        margin-right: 1em;
+    }
+
+    .page-description {
+        margin-bottom: 2em;
+    }
+
+    .simple-table {
+        margin-top: 1em;
+        font-size: 0.875rem;
+        empty-cells: show;
+    }
+    .simple-table td {
+        height: 29px;
+        min-width: 120px;
+    }
+
+    .simple-table th {
+        height: 29px;
+        min-width: 120px;
+    }
+
+    .simple-table-header-color {
+        background: rgb(247, 246, 243);
+        color: black;
+    }
+    .simple-table-header {
+        font-weight: 500;
+    }
+
+    time {
+        opacity: 0.5;
+    }
+
+    .icon {
+        display: inline-block;
+        max-width: 1.2em;
+        max-height: 1.2em;
+        text-decoration: none;
+        vertical-align: text-bottom;
+        margin-right: 0.5em;
+    }
+
+    img.icon {
+        border-radius: 3px;
+    }
+
+    .user-icon {
+        width: 1.5em;
+        height: 1.5em;
+        border-radius: 100%;
+        margin-right: 0.5rem;
+    }
+
+    .user-icon-inner {
+        font-size: 0.8em;
+    }
+
+    .text-icon {
+        border: 1px solid #000;
+        text-align: center;
+    }
+
+    .page-cover-image {
+        display: block;
+        object-fit: cover;
+        width: 100%;
+        max-height: 30vh;
+    }
+
+    .page-header-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .page-header-icon-with-cover {
+        margin-top: -0.72em;
+        margin-left: 0.07em;
+    }
+
+    .page-header-icon img {
+        border-radius: 3px;
+    }
+
+    .link-to-page {
+        margin: 1em 0;
+        padding: 0;
+        border: none;
+        font-weight: 500;
+    }
+
+    p > .user {
+        opacity: 0.5;
+    }
+
+    td > .user,
+    td > time {
+        white-space: nowrap;
+    }
+
+    input[type="checkbox"] {
+        transform: scale(1.5);
+        margin-right: 0.6em;
+        vertical-align: middle;
+    }
+
+    p {
+        margin-top: 0.5em;
+        margin-bottom: 0.5em;
+    }
+
+    .image {
+        border: none;
+        margin: 1.5em 0;
+        padding: 0;
+        border-radius: 0;
+        text-align: center;
+    }
+
+    code, .code {
+        background: var(--accent-color);
+        border-radius: 3px;
+        padding: 0.2em 0.4em;
+        font-size: 90%;
+        color: #eb5757;
+    }
+
+    .code {
+        padding: 1.5em 1em;
+    }
+
+    .code-wrap {
+        white-space: pre-wrap;
+        word-break: break-all;
+    }
+
+    .code > code {
+        background: none;
+        padding: 0;
+        font-size: 100%;
+        color: inherit;
+    }
+
+    blockquote {
+        font-size: 1.1em;
+        margin: 1em 0;
+        padding-left: 1em;
+        border-left: 4px solid var(--primary-color);
+        background: var(--secondary-color);
+        color: var(--light-text);
+    }
+
+    .bookmark {
+        text-decoration: none;
+        max-height: 8em;
+        padding: 0;
+        display: flex;
+        width: 100%;
+        align-items: stretch;
+    }
+
+    .bookmark-title {
+        font-size: 0.85em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        height: 1.75em;
+        white-space: nowrap;
+    }
+
+    .bookmark-text {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .bookmark-info {
+        flex: 4 1 180px;
+        padding: 12px 14px 14px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .bookmark-image {
+        width: 33%;
+        flex: 1 1 180px;
+        display: block;
+        position: relative;
+        object-fit: cover;
+        border-radius: 1px;
+    }
+
+    .bookmark-description {
+        color: rgba(55, 53, 47, 0.6);
+        font-size: 0.75em;
+        overflow: hidden;
+        max-height: 4.5em;
+        word-break: break-word;
+    }
+
+    .bookmark-href {
+        font-size: 0.75em;
+        margin-top: 0.25em;
+    }
+
+    .sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"; }
+    .code { font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace; }
+    .serif { font-family: Lyon-Text, Georgia, ui-serif, serif; }
+    .mono { font-family: iawriter-mono, Nitti, Menlo, Courier, monospace; }
+    .pdf .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK JP'; }
+    .pdf:lang(zh-CN) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK SC'; }
+    .pdf:lang(zh-TW) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK TC'; }
+    .pdf:lang(ko-KR) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK KR'; }
+    .pdf .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+    .pdf:lang(zh-CN) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+    .pdf:lang(zh-TW) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+    .pdf:lang(ko-KR) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+    .pdf .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK JP'; }
+    .pdf:lang(zh-CN) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK SC'; }
+    .pdf:lang(zh-TW) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK TC'; }
+    .pdf:lang(ko-KR) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK KR'; }
+    .pdf .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+    .pdf:lang(zh-CN) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+    .pdf:lang(zh-TW) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+    .pdf:lang(ko-KR) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+    .highlight-default {
+        color: rgba(50, 48, 44, 1);
+    }
+    .highlight-gray {
+        color: rgba(115, 114, 110, 1);
+        fill: rgba(115, 114, 110, 1);
+    }
+    .highlight-brown {
+        color: rgba(159, 107, 83, 1);
+        fill: rgba(159, 107, 83, 1);
+    }
+    .highlight-orange {
+        color: rgba(217, 115, 13, 1);
+        fill: rgba(217, 115, 13, 1);
+    }
+    .highlight-yellow {
+        color: rgba(203, 145, 47, 1);
+        fill: rgba(203, 145, 47, 1);
+    }
+    .highlight-teal {
+        color: rgba(68, 131, 97, 1);
+        fill: rgba(68, 131, 97, 1);
+    }
+    .highlight-blue {
+        color: rgba(51, 126, 169, 1);
+        fill: rgba(51, 126, 169, 1);
+    }
+    .highlight-purple {
+        color: rgba(144, 101, 176, 1);
+        fill: rgba(144, 101, 176, 1);
+    }
+    .highlight-pink {
+        color: rgba(193, 76, 138, 1);
+        fill: rgba(193, 76, 138, 1);
+    }
+    .highlight-red {
+        color: rgba(205, 60, 58, 1);
+        fill: rgba(205, 60, 58, 1);
+    }
+    .highlight-default_background {
+        color: rgba(50, 48, 44, 1);
+    }
+    .highlight-gray_background {
+        background: rgba(248, 248, 247, 1);
+    }
+    .highlight-brown_background {
+        background: rgba(244, 238, 238, 1);
+    }
+    .highlight-orange_background {
+        background: rgba(251, 236, 221, 1);
+    }
+    .highlight-yellow_background {
+        background: rgba(251, 243, 219, 1);
+    }
+    .highlight-teal_background {
+        background: rgba(237, 243, 236, 1);
+    }
+    .highlight-blue_background {
+        background: rgba(231, 243, 248, 1);
+    }
+    .highlight-purple_background {
+        background: rgba(248, 243, 252, 1);
+    }
+    .highlight-pink_background {
+        background: rgba(252, 241, 246, 1);
+    }
+    .highlight-red_background {
+        background: rgba(253, 235, 236, 1);
+    }
+    .block-color-default {
+        color: inherit;
+        fill: inherit;
+    }
+    .block-color-gray {
+        color: rgba(115, 114, 110, 1);
+        fill: rgba(115, 114, 110, 1);
+    }
+    .block-color-brown {
+        color: rgba(159, 107, 83, 1);
+        fill: rgba(159, 107, 83, 1);
+    }
+    .block-color-orange {
+        color: rgba(217, 115, 13, 1);
+        fill: rgba(217, 115, 13, 1);
+    }
+    .block-color-yellow {
+        color: rgba(203, 145, 47, 1);
+        fill: rgba(203, 145, 47, 1);
+    }
+    .block-color-teal {
+        color: rgba(68, 131, 97, 1);
+        fill: rgba(68, 131, 97, 1);
+    }
+    .block-color-blue {
+        color: rgba(51, 126, 169, 1);
+        fill: rgba(51, 126, 169, 1);
+    }
+    .block-color-purple {
+        color: rgba(144, 101, 176, 1);
+        fill: rgba(144, 101, 176, 1);
+    }
+    .block-color-pink {
+        color: rgba(193, 76, 138, 1);
+        fill: rgba(193, 76, 138, 1);
+    }
+    .block-color-red {
+        color: rgba(205, 60, 58, 1);
+        fill: rgba(205, 60, 58, 1);
+    }
+    .block-color-default_background {
+        color: inherit;
+        fill: inherit;
+    }
+    .block-color-gray_background {
+        background: rgba(248, 248, 247, 1);
+    }
+    .block-color-brown_background {
+        background: rgba(244, 238, 238, 1);
+    }
+    .block-color-orange_background {
+        background: rgba(251, 236, 221, 1);
+    }
+    .block-color-yellow_background {
+        background: rgba(251, 243, 219, 1);
+    }
+    .block-color-teal_background {
+        background: rgba(237, 243, 236, 1);
+    }
+    .block-color-blue_background {
+        background: rgba(231, 243, 248, 1);
+    }
+    .block-color-purple_background {
+        background: rgba(248, 243, 252, 1);
+    }
+    .block-color-pink_background {
+        background: rgba(252, 241, 246, 1);
+    }
+    .block-color-red_background {
+        background: rgba(253, 235, 236, 1);
+    }
+    .select-value-color-default { background-color: rgba(84, 72, 49, 0.08); }
+    .select-value-color-gray { background-color: rgba(84, 72, 49, 0.15); }
+    .select-value-color-brown { background-color: rgba(210, 162, 141, 0.35); }
+    .select-value-color-orange { background-color: rgba(224, 124, 57, 0.27); }
+    .select-value-color-yellow { background-color: rgba(236, 191, 66, 0.39); }
+    .select-value-color-green { background-color: rgba(123, 183, 129, 0.27); }
+    .select-value-color-blue { background-color: rgba(93, 165, 206, 0.27); }
+    .select-value-color-purple { background-color: rgba(168, 129, 197, 0.27); }
+    .select-value-color-pink { background-color: rgba(225, 136, 179, 0.27); }
+    .select-value-color-red { background-color: rgba(244, 171, 159, 0.4); }
+
+    .checkbox {
+        display: inline-flex;
+        vertical-align: text-bottom;
+        width: 16;
+        height: 16;
+        background-size: 16px;
+        margin-left: 2px;
+        margin-right: 5px;
+    }
+
+    .checkbox-on {
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20width%3D%2216%22%20height%3D%2216%22%20fill%3D%22%2358A9D7%22%2F%3E%0A%3Cpath%20d%3D%22M6.71429%2012.2852L14%204.9995L12.7143%203.71436L6.71429%209.71378L3.28571%206.2831L2%207.57092L6.71429%2012.2852Z%22%20fill%3D%22white%22%2F%3E%0A%3C%2Fsvg%3E");
+    }
+
+    .checkbox-off {
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20x%3D%220.75%22%20y%3D%220.75%22%20width%3D%2214.5%22%20height%3D%2214.5%22%20fill%3D%22white%22%20stroke%3D%22%2336352F%22%20stroke-width%3D%221.5%22%2F%3E%0A%3C%2Fsvg%3E");
+    }
+</style></head><body><article id="237c9437-cd3d-8001-9913-c62d8a4c1918" class="page sans"><header><h1 class="page-title">My Understanding of Building AI/LLM Products</h1><p class="page-description"></p></header><div class="page-body"><p id="239c9437-cd3d-80ca-a79c-fa737b0a4559" class="">Starting in early 2024, I began building my own AI project in my spare time. In this blog, I want to share some thoughts and lessons learned from that experience. Building a product around large language models (LLMs) involves unique challenges, but many principles from traditional software development still apply. I’ll break down my insights into three parts below.</p><h2 id="239c9437-cd3d-8086-aa4d-c7c6b5ff0c24" class="">Part 1: Two Pillars – The LLM Model and the Input Context</h2><p id="239c9437-cd3d-80d9-a6b0-d26bdbfab467" class="">Any AI/LLM product essentially has two core components: <strong>the model</strong> (usually an autoregressive LLM) and <strong>the input tokens</strong> that form its context. In other words, everything from prompts, function call specifications, retrieved file content, to memory history all get converted into input tokens fed into the LLM. The model then generates output tokens in response. Because of this, building a successful LLM-driven application requires carefully coordinating improvements in both the model itself and the way we construct its input context (sometimes called prompt engineering).</p><p id="239c9437-cd3d-803f-b63a-f0342b03ce6c" class="">It’s useful to think of an AI product as the combination of the <strong>LLM’s capabilities</strong> and the <strong>context you provide</strong> to it. In industry, teams often specialize along these lines: one group (often PhD-level researchers) works on training or fine-tuning the LLM model, and another group focuses on designing effective prompts and context (so-called <em>prompt engineers</em> or <em>context engineers</em>). </p><p id="239c9437-cd3d-8072-9328-ed7e81adc8ad" class="">For these two parts, improving the model (e.g. via supervised fine-tuning or reinforcement learning) tends to raise the base or average performance of the system, making it more generally capable. On the other hand, improving the input context/prompt can more sharply increase the <em>peak</em> performance on specific tasks by giving the model exactly the information and guidance it needs. In practice, you need both: a strong foundation model and a well-designed prompt/context to unlock its best performance. However, given that many open-source models and API-accessible LLMs today are already very powerful, a lot of startups focus mainly on the second part – how to <strong>engineer the context</strong> to solve particular problems. This is not easy either, especially if you want reliable, industry-grade performance.</p><p id="239c9437-cd3d-8022-b897-cf581901a5cd" class=""><em>(Side note: You might see terms like “agent,” “workflow,” “chatbot,” or “MCP” when discussing LLM products. These all still boil down to an LLM plus its input context.)</em></p><h2 id="239c9437-cd3d-8012-92d9-c63bb06189a8" class="">Part 2: Designing LLM Product is Like Designing Software Product</h2><p id="239c9437-cd3d-8039-9959-e24b56a9dd92" class="">In my understanding, designing the context or prompt for an LLM is very similar to designing a software system – except instead of a programming language, you’re using natural language, and the “compiler” is the LLM itself. Andrej Karpathy refers to this new paradigm as <strong>Software 3.0</strong>, where programming is done through high-level natural language instructions rather than code. Just as high-level programming languages made development more accessible compared to assembly, now even natural language can instruct computers to perform complex tasks.</p><blockquote id="239c9437-cd3d-8007-99bb-d0c5dbf73d7b" class="">Analogy: Bit → Assembly → C → Python → Natural Language.<p id="239c9437-cd3d-8062-88d6-cb3705e7ab05" class="">— We’ve reached the point where we can “code” by simply <em>talking</em> to the machine, and it will do the rest.</p></blockquote><p id="239c9437-cd3d-80dc-817f-e9f47da604f1" class="">A few words or tokens can lead to dramatically different outputs. For example, adding <em>“Translate the output into Chinese.”</em> at the end of a prompt (just a handful of tokens) can replace what would otherwise be hundreds of lines of code calling a translation API. This highlights how powerful well-crafted prompts can be.</p><p id="239c9437-cd3d-80c0-9052-f9ba4d922117" class="">I found that some classic software design principles also apply to prompt/context design for LLMs:</p><ol type="1" id="239c9437-cd3d-8081-9abc-e56dbddb21ce" class="numbered-list" start="1"><li><strong>Design the system effectively:</strong> In complex products like multi-agent systems, AI agents, or AI workflows, it’s wise to split a large abstract task into smaller, specific subtasks. Often I imagine how a human expert would tackle the problem step by step, and then assign each subtask to either a separate agent or a distinct prompt in a sequence. (Each subtask might correspond to one agent in a multi-agent setup, one function/state in an agent loop, or one step in a workflow.) <br/><br/>For example, Google’s open-source <strong>Gemini CLI</strong> AI agent takes this approach. It operates as a hierarchical, multi-layered architecture that splits context management into several specialized tasks: <strong>(1) Base Prompt Loading</strong> - dynamically loads foundational system prompts from<code> packages/core/src/core/prompts.ts</code> that define agent behavior and tool capabilities; <strong>(2) Environment Detection</strong> - runs parallel checks for sandbox status, Git repository presence, and working directory context to adapt available tools and safety constraints; <strong>(3) Dynamic Context Assembly</strong> - orchestrates the collection of project-specific context through GEMINI.md file discovery, file system analysis, and recent change detection; <strong>(4) Tool Integration Coordination</strong> - manages the registration and availability of specialized tools (shell, file I/O, memory, web) based on environment constraints and user permissions; <strong>(5) Conversation History Compression</strong> - monitors token usage and applies intelligent compression algorithms that preserve essential context while reducing token count when approaching model limits; <strong>(6) Memory Management</strong> - handles persistent context storage across sessions through hierarchical memory discovery (global → project → component levels); and <strong>(7) Context Synthesis</strong> - combines all layers (base prompt + environment + project + conversation + tool results) into a unified context bundle that&#x27;s dynamically assembled for each API call, ensuring the LLM has rich, relevant context while respecting security boundaries and token constraints.<br/><br/>In general, when designing an LLM system, outline the logical steps or modules first, and give the LLM access to any necessary tools or functions a human would use at each step. This modular approach ensures the overall system can tackle complex problems in a structured way.</li></ol><div id="239c9437-cd3d-8035-9b1e-ce6c424b8aea" class="column-list"><div id="239c9437-cd3d-8042-9d9f-eaec4821494c" style="width:50%" class="column"><figure id="239c9437-cd3d-80f1-b45e-ddd11bd14e92" class="image"><a href="My%20Understanding%20of%20Building%20AI%20LLM%20Products%20237c9437cd3d80019913c62d8a4c1918/399ef08d-5eb6-4029-a659-5ef28143d572.png"><img style="width:483.855421686747px" src="My%20Understanding%20of%20Building%20AI%20LLM%20Products%20237c9437cd3d80019913c62d8a4c1918/399ef08d-5eb6-4029-a659-5ef28143d572.png"/></a></figure><p id="239c9437-cd3d-807d-ab73-d503a1ac0437" class="">
+</p></div><div id="239c9437-cd3d-8022-9ce2-c8398412d209" style="width:50%" class="column"><figure id="239c9437-cd3d-8083-81e7-fdfac64cef37" class="image"><a href="My%20Understanding%20of%20Building%20AI%20LLM%20Products%20237c9437cd3d80019913c62d8a4c1918/a39d72aa-27f5-47b8-838b-40016433f928.png"><img style="width:218.2608695652174px" src="My%20Understanding%20of%20Building%20AI%20LLM%20Products%20237c9437cd3d80019913c62d8a4c1918/a39d72aa-27f5-47b8-838b-40016433f928.png"/></a></figure></div></div><figure id="239c9437-cd3d-80cb-9dbf-d4383f9d477b" class="image"><a href="My%20Understanding%20of%20Building%20AI%20LLM%20Products%20237c9437cd3d80019913c62d8a4c1918/image.png"><img style="width:384px" src="My%20Understanding%20of%20Building%20AI%20LLM%20Products%20237c9437cd3d80019913c62d8a4c1918/image.png"/></a></figure><p id="239c9437-cd3d-8045-b243-e3cdcbb4e85c" class="">                                          Figure 1a-1c: <a href="https://github.com/google-gemini/gemini-cli/blob/main/packages/core/src/core/prompts.ts">Prompt in Gemini CLI AI agent</a></p><ol type="1" id="239c9437-cd3d-80f5-909e-cfb6a6b64ed2" class="numbered-list" start="2"><li><strong>Anticipate different cases and handle exceptions:</strong> When deploying to real users, your AI will face all sorts of inputs and edge cases. It’s impossible to foresee everything, but you should include constraints and instructions for scenarios you <em>can</em> predict. In my project, for instance, I used an LLM to extract images from PDFs to help explain text in a retrieval-augmented generation (RAG) system. During testing, I noticed the LLM sometimes extracted images of mathematical formulas or code blocks that were already present in the text (so they weren’t actually useful, just repetitive). To fix this, I added a rule in the system prompt to <strong>skip formula/code images if the content is already in the text</strong>. In general, as you refine your prompt or agent, keep updating it with guidelines to handle new failure modes or misunderstandings that you encounter. This is similar to writing robust code that checks for invalid inputs or error conditions.</li></ol><ol type="1" id="239c9437-cd3d-808f-8ee0-d64007160e22" class="numbered-list" start="3"><li><strong>Test and evaluate incrementally (step by step, part by part like unit test):</strong> After implementing each part of your LLM system, you usually won’t get everything right on the first try. I learned to test each module or step in isolation – essentially unit-testing my prompts. For example, if my workflow has five steps, I’ll first run step 1 alone on some sample inputs to see its output, then step 2, and so on. This way, if the final result is wrong, I can pinpoint which step is causing the issue. It’s much like traditional software testing: verify that each function works correctly before testing the whole system integration. By evaluating “small portions to large,” you ensure that each component meets the specification. If the integrated system still fails after that, the problem might be in the overall design (in which case, revisit step 1 about system design).</li></ol><ol type="1" id="239c9437-cd3d-8078-90a3-dc157477e6f7" class="numbered-list" start="4"><li><strong>Iterate with feedback – testing may be more important than initial design:</strong> This is a point many people mention, but it’s especially true for AI products: you need to <strong>iteratively refine</strong> based on testing and user feedback (akin to agile/scrum cycles). The goal of most AI/LLM products is to save human time or effort, so the real measure of success is how well it handles real-world use cases. Some tasks have clear automatic evaluation metrics or benchmarks – for example, code correctness can be checked by tests, and math problems have verifiable answers. Jason Wei refers to this as <em>“verifier’s law”</em>, which states that tasks that are easy to verify are easier to solve with AI. For such tasks, standard benchmarks and automated tests are useful for evaluation. However, many other tasks (like providing helpful advice, writing an essay, or supporting a user query) are <strong>hard to evaluate automatically</strong> – only human judgement can tell if the output is truly good. In those cases, spending more time testing your system with diverse user inputs and getting feedback is even more important than the initial design. You want to see how the product responds to all sorts of real queries and edge cases (as mentioned in point 2) and then refine it. This might involve adding new prompt examples, adjusting instructions, or even collecting user ratings to guide further improvement. In short, continuous evaluation and improvement loops are key to reaching a production-quality AI system.</li></ol><h2 id="239c9437-cd3d-80f6-8293-dd14b698f63e" class="">Part 3: How LLM Products Differ from Traditional Software</h2><p id="239c9437-cd3d-800e-85bb-ec8f449e6628" class="">Despite many similarities to traditional software engineering, building with LLMs <strong>is not exactly the same</strong> as building a normal software product. LLMs have some special characteristics that require extra care. Two major differences I’ve noted are:</p><ol type="1" id="239c9437-cd3d-8014-8a6f-fb8c0ba8ebcb" class="numbered-list" start="1"><li><strong>Non-deterministic and variable outputs:</strong> Traditional software is deterministic – the same input gives the same output every time (unless there’s randomization by design). LLMs, however, can produce <em>different</em> outputs to the same prompt, especially if any randomness (<code>temperature</code>) is involved. Even at a low temperature setting (to make it more deterministic), small variations or tokens can lead to divergent results. In open-ended generation tasks, this variability isn’t a big issue – two different wordings of an answer might both be acceptable. But if you’re using an LLM for something like classification, routing in a workflow, or deciding whether to call a particular function, then a small change in its output can have a butterfly effect on the whole system’s behavior. For example, if an agent is supposed to choose between two tools and it <em>usually</em> picks the correct one, but occasionally picks the wrong tool due to a slight change in phrasing, the final outcomes can be drastically different (one successful, one a failure).<figure id="239c9437-cd3d-8097-b5ab-dba694dfb48c" class="image"><a href="My%20Understanding%20of%20Building%20AI%20LLM%20Products%20237c9437cd3d80019913c62d8a4c1918/image%201.png"><img style="width:2401px" src="My%20Understanding%20of%20Building%20AI%20LLM%20Products%20237c9437cd3d80019913c62d8a4c1918/image%201.png"/></a></figure><p id="239c9437-cd3d-8036-a20c-d2eac3821cf1" class="">                                                  Figure 2. <a href="https://www.anthropic.com/engineering/building-effective-agents">Example of LLM Router</a></p><p id="239c9437-cd3d-80f7-8385-dde4a6acc907" class=""><strong>Solution approaches:</strong> If you have the resources, one way to mitigate this is to train or fine-tune a model specifically for those classification or routing tasks, making it more reliably consistent in those decisions. Fine-tuned models or smaller purpose-built classifiers can act as a more deterministic “router” for your main LLM. If that’s not feasible, you can still work within one LLM: use techniques like few-shot prompting (provide examples of the desired decision-making) to guide it, and always handle exceptions gracefully. For instance, if the LLM’s choice doesn’t make sense, have a fallback or ask it to think again. The Google Gemini Code Assist agent, for example, will <em>auto-recover</em> from a failed attempt and try another approach when coding. As developers, we need to build similar checks and fallback strategies since we can’t 100% eliminate variability.</p></li></ol><ol type="1" id="239c9437-cd3d-8034-a1c1-d658f355073f" class="numbered-list" start="2"><li><strong>High creativity means high unpredictability (and potential for mistakes):</strong> LLMs are extraordinarily creative and can produce results we didn’t explicitly program – which is often their appeal. They can find unconventional solutions to problems and generate content autonomously. However, this strength is also a weakness: unlike rigid software, an LLM might do something totally unexpected (and undesired) if not properly constrained. There have been a few eye-opening real-world incidents that highlight this risk. For example, in one case an AI coding agent (Replit’s) was given partial access to a production database and it ended up deleting the entire database and even tried to cover it up. (The AI was instructed to make an app; it hallucinated or panicked, ran a destructive command, then lied that everything was fine – a <em>catastrophic failure</em> that prompted the CEO’s apology.) In another case, Claude’s coding assistant (Claude Code) deleted a user’s files on their system and provided misleading explanations instead of admitting the error. These incidents show that giving an LLM too much autonomy – like direct file system or database rights – can lead to irreversible damage if the model behaves unexpectedly.<p id="239c9437-cd3d-809f-9047-da02828b121f" class=""><strong>Mitigation:</strong> It’s crucial to put guardrails and limits on what autonomous actions an AI agent can take. One best practice is to keep a <em>human in the loop</em> for critical operations: for instance, if the AI wants to run a database deletion or overwrite files, have it ask for user confirmation or log the intent for review. Another approach is to use sandbox environments or dummy data during development to see what the agent might do, before connecting it to real assets. In general, <strong>don’t give an AI agent more permissions than necessary</strong>. The idea of an “AI agent that can do everything fully autonomously” is exciting, but in practice you should start with the minimum scope and gradually expand capabilities as you gain trust in the system’s reliability. It’s better to have the AI suggest an action (like “I would delete these records to resolve X issue”) and let a human or a secure script execute it, rather than letting the AI free on a production database. By being <em>creative in what the AI can do</em> but <em>strict in setting boundaries</em>, we can harness LLMs’ power while avoiding costly mistakes.</p></li></ol><hr id="239c9437-cd3d-80e7-8895-c173b22c7346"/><p id="239c9437-cd3d-80cc-8849-c26df14ae447" class=""><strong>Conclusion:</strong> Building an LLM/AI product is a lot like building traditional software – you need good design, careful implementation, and extensive testing. The underlying engineering principles (modularity, robustness, iterative improvement) are the same. But the unique features of LLMs (their flexible natural language “programming” and their unpredictable creativity) add new twists that engineers must be mindful of. It’s certainly not easy to build a good AI/LLM product even if no need to train/fine-tuning the model ourselves; it requires tuning the contexts, handling edge cases, and constantly refining through testing. My personal experience is that you should <strong>be abstract and open-minded in the creative design phase, but very specific and strict in the regulation and restriction phase</strong>. In other words, leverage the AI’s creativity and generality to brainstorm solutions, but impose clear rules and checks to keep it on track. This balance is what turns a cool AI demo into a reliable AI product.</p><p id="239c9437-cd3d-8089-9fcf-caa4f90df36d" class="">These are just my learnings from building LLM systems myself, and I’m always keen to discuss these points further.</p><p id="239c9437-cd3d-80c1-b6d3-f6ac70744492" class=""><strong>Sources:</strong></p><ul id="239c9437-cd3d-807c-87b1-fb9157ddf44d" class="bulleted-list"><li style="list-style-type:disc">Anthropic – <em>Building Effective AI Agents(</em><em><a href="https://www.anthropic.com/engineering/building-effective-agents">https://www.anthropic.com/engineering/building-effective-agents</a></em><em>)</em></li></ul><ul id="239c9437-cd3d-8035-9e5d-c20dd1b520db" class="bulleted-list"><li style="list-style-type:disc">Business Insider – <em>Replit AI Agent Deletes Customer’s Database (</em><em><a href="https://www.businessinsider.com/replit-ceo-apologizes-ai-coding-tool-delete-company-database-2025-7#:~:text=%2A%20,he%20added">https://www.businessinsider.com/replit-ceo-apologizes-ai-coding-tool-delete-company-database-2025-7#:~:text=* ,he added</a></em><em>)</em></li></ul><ul id="239c9437-cd3d-80d8-8157-fb4b760114ed" class="bulleted-list"><li style="list-style-type:disc">GitHub (Anthropic Claude Issue) – <em>Claude Code Deleted Files and Lied (</em><em><a href="https://github.com/anthropics/claude-code/issues/3109">https://github.com/anthropics/claude-code/issues/3109</a></em><em>)</em></li></ul><ul id="239c9437-cd3d-80b2-9384-ef1d3e906c6c" class="bulleted-list"><li style="list-style-type:disc">Google – <em>Gemini CLI (AI Agent for Terminal) (</em><em><a href="https://github.com/google-gemini/gemini-cli">https://github.com/google-gemini/gemini-cli)</a></em></li></ul><ul id="239c9437-cd3d-8082-940d-ce29434f97a9" class="bulleted-list"><li style="list-style-type:disc">Jason, W – <em> Asymmetry of Verification and Verifier’s Law (</em><em><a href="https://www.jasonwei.net/blog/asymmetry-of-verification-and-verifiers-law#:~:text=Verifier%E2%80%99s%20law%3A%20The%20ease%20of,will%20be%20solved%20by%20AI">https://www.jasonwei.net/blog/asymmetry-of-verification-and-verifiers-law#:~:text=Verifier’s law%3A The ease of,will be solved by AI</a></em><em>)</em></li></ul><ul id="239c9437-cd3d-808d-ab3f-e5929b8932c3" class="bulleted-list"><li style="list-style-type:disc">Karpathy, A. – <em>Software is changing (</em><a href="https://www.youtube.com/watch?v=LCEmiRjPEtQ">https://www.youtube.com/watch?v=LCEmiRjPEtQ</a><em>)</em></li></ul><p id="239c9437-cd3d-8060-bd6d-cb718d7137be" class="">
+</p><p id="239c9437-cd3d-80ce-8534-ff48c01756e4" class="">
+</p><p id="237c9437-cd3d-80f4-9b1e-dc60065365ca" class="">
+</p></div></article><span class="sans" style="font-size:14px;padding-top:2em"></span></body></html>
